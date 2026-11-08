@@ -10,7 +10,7 @@
 <style>
 /* Мини-приложение Telegram-бота афиши. Журнальная лента: вкладки (выходные / две недели / всё / мои), обложка, афиши по неделям. */
 :root{--bg:#f3f1ec;--fg:#1b1a17;--mut:#6b675e;--card:#fffefb;--line:#dcd8cd;--soft:#ebe7dd;
---c-kino:#2f4bd8;--c-teatr:#c2185b;--c-konc:#0d7d6c;--c-stend:#d9540b;--c-fest:#6a35c9;--c-opera:#8a1f2b;--c-biz:#8a6a12;--c-dr:#555049;
+--c-kino:#2f4bd8;--c-teatr:#c2185b;--c-konc:#0d7d6c;--c-stend:#d9540b;--c-fest:#6a35c9;--c-opera:#8a1f2b;--c-biz:#8a6a12;--c-degust:#9a3f5c;--c-dr:#555049;
 --yes:#1f8a3b;--maybe:#b8860b;--no:#a33;
 --f-display:Unbounded,"Arial Black",system-ui,sans-serif;--f-body:Onest,system-ui,-apple-system,"Segoe UI",sans-serif}
 :root[data-theme="dark"]{--bg:#14130f;--fg:#f1eee6;--mut:#a29d90;--card:#1f1d18;--line:#35322a;--soft:#2a2822;--c-dr:#7a746a;color-scheme:dark}
@@ -83,7 +83,7 @@ a{color:inherit}
 <script>
 var API = "https://niaukqozosjdmudmasxk.supabase.co/functions/v1/afisha-bot";
 var TG = window.Telegram && Telegram.WebApp;
-var TYPES = [["Кино","--c-kino"],["Театр","--c-teatr"],["Опера / балет","--c-opera"],["Концерт","--c-konc"],["Стендап","--c-stend"],["Фестиваль","--c-fest"],["Бизнес","--c-biz"]];
+var TYPES = [["Кино","--c-kino"],["Театр","--c-teatr"],["Опера / балет","--c-opera"],["Концерт","--c-konc"],["Стендап","--c-stend"],["Фестиваль","--c-fest"],["Дегустация","--c-degust"],["Бизнес","--c-biz"]];
 var COLOR = {}; TYPES.forEach(function(t){COLOR[t[0]] = t[1]});
 var MON = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 var WD = ["вс","пн","вт","ср","чт","пт","сб"];
