@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Афиша Вильнюса</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&display=swap">
+<style>
+/* Мини-приложение Telegram-бота афиши. Журнальная лента: вкладки (выходные / две недели / всё / мои), обложка, афиши по неделям. */
+:root{--bg:#f3f1ec;--fg:#1b1a17;--mut:#6b675e;--card:#fffefb;--line:#dcd8cd;--soft:#ebe7dd;
+--c-kino:#2f4bd8;--c-teatr:#c2185b;--c-konc:#0d7d6c;--c-stend:#d9540b;--c-fest:#6a35c9;--c-opera:#8a1f2b;--c-biz:#8a6a12;--c-dr:#555049;
+--yes:#1f8a3b;--maybe:#b8860b;--no:#a33;
+--f-display:Unbounded,"Arial Black",system-ui,sans-serif;--f-body:Onest,system-ui,-apple-system,"Segoe UI",sans-serif}
+:root[data-theme="dark"]{--bg:#14130f;--fg:#f1eee6;--mut:#a29d90;--card:#1f1d18;--line:#35322a;--soft:#2a2822;--c-dr:#7a746a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.4;
+padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-family:var(--f-display);font-weight:700;font-size:24px;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--mut);margin:0 0 14px;font-size:15px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--soft);border-radius:10px;padding:4px;margin-bottom:12px}
+.tab{border:0;background:transparent;color:var(--fg);border-radius:7px;padding:9px 4px;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.tab[aria-selected=true]{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 16px;padding:0 16px 4px;scrollbar-width:none}
+.chip{flex:0 0 auto;border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.state{background:var(--card);border:1px dashed var(--line);border-radius:6px;padding:16px;color:var(--mut);margin-bottom:16px}
+.state b{color:var(--fg)}
+.cover{border-radius:6px;overflow:hidden;background:var(--tc);color:#fff;padding:20px 18px 18px;margin-bottom:22px}
+.cover .lab{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.cover h2{font-family:var(--f-display);font-size:24px;line-height:1.12;margin:10px 0 8px;text-wrap:balance}
+.cover p{margin:0 0 12px}
+.cover .meta{font-weight:600;margin-bottom:12px}
+.week{font-family:var(--f-display);font-size:15px;margin:26px 0 2px}
+.weeksub{color:var(--mut);font-size:13px;margin:0 0 4px}
+.day{font-family:var(--f-display);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:16px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--fg)}
+.card{display:grid;grid-template-columns:78px 1fr;background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:12px}
+.poster{background:var(--tc);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:9px;min-height:140px}
+.poster b{font-family:var(--f-display);font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.poster span{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;line-height:1.25}
+.body{padding:11px 12px;min-width:0}
+.body h3{font-size:17px;line-height:1.2;margin:0 0 4px;text-wrap:balance}
+.where{color:var(--mut);font-size:14px;margin:0 0 8px}
+.price{display:inline-block;font-weight:600;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:2px 8px;font-size:14px}
+.why{margin:8px 0;font-size:14.5px}
+.ours{margin:0 0 8px;font-size:14px;background:var(--soft);border-radius:4px;padding:6px 9px}
+.who{font-size:14px;margin:0 0 10px}
+.who .y{color:var(--yes);font-weight:600}.who .m{color:var(--maybe);font-weight:600}
+.tag{font-size:13px;color:var(--mut);margin:0 0 10px}
+a{color:inherit}
+.btns{display:flex;gap:6px}
+.btn{flex:1 1 0;min-width:0;border:1.5px solid var(--line);background:transparent;color:var(--fg);border-radius:6px;padding:9px 4px;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.btn:disabled{opacity:.5}
+.btn[data-v=yes][aria-pressed=true]{background:var(--yes);border-color:var(--yes);color:#fff}
+.btn[data-v=maybe][aria-pressed=true]{background:var(--maybe);border-color:var(--maybe);color:#fff}
+.btn[data-v=no][aria-pressed=true]{background:var(--no);border-color:var(--no);color:#fff}
+.cover .btn{border-color:rgba(255,255,255,.6);color:#fff}
+.cover .btn[aria-pressed=true]{background:#fff;color:#111;border-color:#fff}
+.card.dim{opacity:.45}
+.foot{color:var(--mut);font-size:13px;margin-top:24px}
+.btn:focus-visible,.chip:focus-visible,.tab:focus-visible{outline:3px solid var(--c-kino);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Афиша Вильнюса</h1>
+  <p class="sub" id="hello">Куда сходить с друзьями. Жмите «Хочу» — все увидят, кто собирается.</p>
+  <div class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-t="weekend">Выходные</button>
+    <button class="tab" role="tab" data-t="two">2 недели</button>
+    <button class="tab" role="tab" data-t="all">Всё</button>
+    <button class="tab" role="tab" data-t="mine">Мои</button>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="Тип"></div>
+  <div id="state" class="state"><b>Загружаю афишу…</b></div>
+  <div id="cover"></div>
+  <div id="list"></div>
+  <p class="foot">Новые события появляются по воскресеньям вечером. Увидели анонс где-то ещё — перешлите его боту в личку, он передаст Павлу. Цены и языки проверены не везде — смотрите страницу события.</p>
+</div>
+<script>
+var API = "https://niaukqozosjdmudmasxk.supabase.co/functions/v1/afisha-bot";
+var TG = window.Telegram && Telegram.WebApp;
+var TYPES = [["Кино","--c-kino"],["Театр","--c-teatr"],["Опера / балет","--c-opera"],["Концерт","--c-konc"],["Стендап","--c-stend"],["Фестиваль","--c-fest"],["Бизнес","--c-biz"]];
+var COLOR = {}; TYPES.forEach(function(t){COLOR[t[0]] = t[1]});
+var MON = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+var WD = ["вс","пн","вт","ср","чт","пт","сб"];
+var E = [], tab = "weekend", filter = "all", busy = {}, me = "", owner = false;
+
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s == null ? "" : s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function d8(s){var p = s.split("-"); return new Date(+p[0], +p[1]-1, +p[2])}
+function today(){var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate())}
+function addDays(d, n){var x = new Date(d); x.setDate(x.getDate() + n); return x}
+function color(t){return "var(" + (COLOR[t] || "--c-dr") + ")"}
+function setState(html){var s = $("state"); s.hidden = !html; s.innerHTML = html || ""}
+function plural(n, f){var a = n % 10, b = n % 100; return a === 1 && b !== 11 ? f[0] : a >= 2 && a <= 4 && (b < 12 || b > 14) ? f[1] : f[2]}
+
+// Выходные: если сегодня пт–вс — до ближайшего воскресенья, иначе ближайшие пт–вс
+function weekendRange(){
+  var t = today(), wd = t.getDay();
+  if (wd === 5 || wd === 6 || wd === 0) return [t, addDays(t, wd === 0 ? 0 : 7 - wd)];
+  var fri = addDays(t, 5 - wd); return [fri, addDays(fri, 2)];
+}
+
+function api(body){
+  body.initData = TG ? TG.initData : "";
+  return fetch(API, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)})
+    .then(function(r){return r.json().then(function(j){if (!r.ok || !j.ok) throw new Error(j.message || ("Ошибка " + r.status)); return j})});
+}
+function apply(j){
+  E = j.feed || []; owner = !!j.owner;
+  if (j.me && !me){me = j.me; $("hello").textContent = "Привет, " + me + "! Жмите «Хочу» — все увидят, кто собирается."}
+  setState(""); render();
+}
+function load(){
+  if (!TG || !TG.initData){setState("<b>Откройте афишу из Telegram.</b><br>Найдите бота @parazakadrom_afisha_bot и нажмите кнопку «🎭 Афиша»."); return}
+  if (!E.length) setState("<b>Загружаю афишу…</b>");
+  api({}).then(apply).catch(function(e){setState("<b>Не получилось загрузить афишу.</b><br>" + esc(e.message) + "<br>Закройте и откройте снова.")});
+}
+function vote(id, v){
+  if (busy[id]) return;
+  var ev = E.filter(function(x){return x.id === id})[0]; if (!ev) return;
+  var prev = ev.mine; ev.mine = prev === v ? null : v; busy[id] = true; render();
+  if (TG && TG.HapticFeedback) TG.HapticFeedback.selectionChanged();
+  api({action: "vote", event: id, vote: v}).then(function(j){busy[id] = false; apply(j)})
+    .catch(function(e){busy[id] = false; ev.mine = prev; render(); setState("<b>Отметка не сохранилась.</b><br>" + esc(e.message))});
+}
+
+function btns(e){
+  return '<div class="btns" role="group" aria-label="Ваш выбор">' + [["yes","Хочу"],["maybe","Может"],["no","Не моё"]].map(function(b){
+    return '<button class="btn" type="button" data-id="' + esc(e.id) + '" data-v="' + b[0] + '" aria-pressed="' + (e.mine === b[0]) + '"' + (busy[e.id] ? " disabled" : "") + '>' + b[1] + '</button>'}).join("") + '</div>';
+}
+function who(e){
+  var y = [], m = [];
+  (e.votes || []).forEach(function(v){(v.v === "yes" ? y : m).push(esc(v.n || "кто-то"))});
+  if (!y.length && !m.length) return "";
+  return '<p class="who">' + (y.length ? '<span class="y">Хотят:</span> ' + y.join(", ") : "") + (y.length && m.length ? " · " : "") + (m.length ? '<span class="m">Может:</span> ' + m.join(", ") : "") + '</p>';
+}
+function when(e){var d = d8(e.date); return WD[d.getDay()] + ", " + d.getDate() + " " + MON[d.getMonth()] + (e.time ? " · " + e.time : "")}
+function card(e){
+  var d = d8(e.date);
+  return '<article class="card' + (e.mine === "no" ? " dim" : "") + '" style="--tc:' + color(e.type) + '">' +
+    '<div class="poster"><b>' + d.getDate() + '</b><span>' + MON[d.getMonth()].slice(0,3) + ', ' + WD[d.getDay()] + '<br>' + esc(e.type || "Событие") + '</span></div>' +
+    '<div class="body"><h3>' + esc(e.name) + '</h3><p class="where">' + esc(e.time ? e.time + " · " : "") + esc(e.place || "") + '</p>' +
+    (e.price ? '<p><span class="price">' + esc(e.price) + '</span></p>' : "") +
+    (e.desc_public ? '<p class="why">' + esc(e.desc_public) + '</p>' : "") +
+    (owner && e.note_private ? '<p class="ours"><b>Для нас:</b> ' + esc(e.note_private) + '</p>' : "") +
+    who(e) +
+    (/^https?:\/\//.test(e.link || "") ? '<p class="tag"><a href="' + esc(e.link) + '" target="_blank" rel="noopener">Страница события и билеты</a></p>' : "") +
+    btns(e) + '</div></article>';
+}
+function score(e){return (e.votes || []).reduce(function(s, v){return s + (v.v === "yes" ? 2 : 1)}, 0)}
+
+function render(){
+  document.querySelectorAll(".tab").forEach(function(t){t.setAttribute("aria-selected", t.dataset.t === tab)});
+  var t0 = today(), wk = addDays(t0, 7), wk2 = addDays(t0, 14), wr = weekendRange();
+  var list = E.filter(function(e){return filter === "all" || (filter === "other" ? !COLOR[e.type] : e.type === filter)});
+  if (tab === "weekend") list = list.filter(function(e){var d = d8(e.date); return d >= wr[0] && d <= wr[1]});
+  if (tab === "two") list = list.filter(function(e){return d8(e.date) < wk2});
+  if (tab === "mine") list = list.filter(function(e){return e.mine === "yes" || e.mine === "maybe"});
+
+  // Обложка — на «Выходных»: то, куда собирается больше всего друзей
+  var cv = null;
+  if (tab === "weekend" && list.length) cv = list.filter(function(e){return e.mine !== "no"}).slice().sort(function(a,b){return score(b) - score(a) || (a.date < b.date ? -1 : 1)})[0];
+  $("cover").innerHTML = cv ? '<section class="cover" style="--tc:' + color(cv.type) + '"><div class="lab">' + (score(cv) ? "Друзья уже собираются" : "Главное на выходных") + ' · ' + esc(cv.type || "Событие") + '</div><h2>' + esc(cv.name) + '</h2>' +
+    (cv.desc_public ? '<p>' + esc(cv.desc_public) + '</p>' : "") + '<div class="meta">' + esc(when(cv)) + (cv.place ? " · " + esc(cv.place) : "") + (cv.price ? " · " + esc(cv.price) : "") + '</div>' + who(cv) + btns(cv) + '</section>' : "";
+
+  var rest = list.filter(function(e){return !cv || e.id !== cv.id});
+  if (tab === "weekend") rest.sort(function(a,b){return (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || score(b) - score(a)});
+  var groups = tab === "weekend" ? [["", function(){return true}]] :
+    [["Эта неделя", function(d){return d < wk}], ["Следующая неделя", function(d){return d >= wk && d < wk2}], ["Дальше", function(d){return d >= wk2}]];
+  var h = "";
+  groups.forEach(function(g){
+    var part = rest.filter(function(e){return g[1](d8(e.date))});
+    if (!part.length) return;
+    if (g[0]) h += '<h2 class="week">' + g[0] + '</h2><p class="weeksub">' + part.length + ' ' + plural(part.length, ["событие","события","событий"]) + '</p>';
+    var last = "";
+    part.forEach(function(e){var d = d8(e.date), k = WD[d.getDay()] + ", " + d.getDate() + " " + MON[d.getMonth()]; if (k !== last){h += '<div class="day">' + k + '</div>'; last = k} h += card(e)});
+  });
+  if (!h && !cv && E.length){
+    h = '<p class="sub">' + (tab === "mine" ? "Здесь будет всё, что вы отметили «Хочу» или «Может» — на любую дату. Бот напомнит заранее." :
+      tab === "weekend" ? "На эти выходные в афише пока ничего — загляните во вкладку «2 недели»." : "В этой категории пока пусто.") + '</p>';
+  }
+  $("list").innerHTML = h;
+}
+function chips(){
+  var h = '<button class="chip" type="button" data-f="all" aria-pressed="' + (filter === "all") + '">Все типы</button>';
+  TYPES.forEach(function(t){h += '<button class="chip" type="button" data-f="' + t[0] + '" aria-pressed="' + (filter === t[0]) + '">' + t[0] + '</button>'});
+  h += '<button class="chip" type="button" data-f="other" aria-pressed="' + (filter === "other") + '">Другое</button>';
+  $("chips").innerHTML = h;
+}
+document.addEventListener("click", function(ev){
+  var b = ev.target.closest(".btn"), f = ev.target.closest(".chip"), t = ev.target.closest(".tab");
+  if (t){tab = t.dataset.t; render(); window.scrollTo(0, 0); return}
+  if (f){filter = f.dataset.f; chips(); render(); return}
+  if (b && b.dataset.id) vote(b.dataset.id, b.dataset.v);
+});
+if (TG){
+  TG.ready(); TG.expand();
+  if (TG.colorScheme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+  if (TG.setHeaderColor) try{TG.setHeaderColor(TG.colorScheme === "dark" ? "#14130f" : "#f3f1ec")}catch(x){}
+  if (TG.setBackgroundColor) try{TG.setBackgroundColor(TG.colorScheme === "dark" ? "#14130f" : "#f3f1ec")}catch(x){}
+} else if (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches){
+  document.documentElement.setAttribute("data-theme", "dark");
+}
+chips(); render(); load();
+</script>
+</body>
+</html>
